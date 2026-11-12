@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Toolchain
+        run: swift --version && xcrun --show-sdk-path
+      - name: Self-test (hashing & upload math)
+        run: swift run -c release gpcloud-selftest
+      - name: Build universal app
+        run: |
+          export GPCLOUD_SDK="$(xcrun --show-sdk-path)"
+          ./scripts/build-app.sh
