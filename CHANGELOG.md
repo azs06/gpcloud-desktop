@@ -11,3 +11,4 @@ First release.
 - New folder, rename, move, copy, star, Trash (restore, delete forever, empty).
 - Menu bar extra: storage meter, live transfers, quick upload, recent files, Open at Login.
 - Universal app for Apple Silicon and Intel, macOS 14 or later.
+- Install with Homebrew: `brew install --cask azs06/tap/gpcloud`.

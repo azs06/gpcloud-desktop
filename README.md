@@ -17,6 +17,16 @@ An **unofficial** native macOS client for [Grameenphone GP Cloud](https://gpclou
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install --cask azs06/tap/gpcloud
+```
+
+Upgrade with `brew upgrade --cask gpcloud`. The cask clears the download quarantine, so the app opens normally.
+
+### Manual
+
 1. Download `GPCloud-<version>-macOS.zip` from [Releases](../../releases) and unzip it.
 2. Move **GPCloud.app** to `/Applications`.
 3. First launch: the app is ad-hoc signed and **not notarized**, so macOS will block a double-click. Either
