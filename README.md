@@ -1,9 +1,16 @@
-# GP Cloud for Mac
+# GP Cloud Desktop
 
-An **unofficial** native macOS client for [Grameenphone GP Cloud](https://gpcloud.grameenphone.com), laid out like Google Drive, with a menu bar extra.
+**Unofficial** desktop clients for [Grameenphone GP Cloud](https://gpcloud.grameenphone.com).
+
+| Platform | Status |
+|---|---|
+| **macOS**: native SwiftUI app with a Google Drive-style browser and a menu bar extra | ✅ [Download](../../releases/latest) · `brew install --cask azs06/tap/gpcloud` |
+| **Windows** | Planned |
 
 > **Not affiliated with, endorsed by, or supported by Grameenphone.** "GP Cloud" and "Grameenphone" belong to their owners.
-> The app talks to undocumented APIs that can change at any time. Use at your own risk.
+> These apps talk to undocumented APIs that can change at any time. Use at your own risk.
+
+## macOS
 
 <p align="center">
   <img src="docs/screenshots/drive-grid.png" alt="My Drive in grid view with thumbnails and the transfers panel" width="820">
@@ -22,7 +29,7 @@ An **unofficial** native macOS client for [Grameenphone GP Cloud](https://gpclou
 
 <sub>Screenshots use the built-in demo mode with sample files. Regenerate them with <code>./scripts/screenshots.sh</code>.</sub>
 
-## Features
+### Features
 
 - **My Drive**: breadcrumbs, a grid view (thumbnails for photos and videos), and a list view sortable by name, date or size
 - **Upload files and whole folders**: drag from Finder, ⌘U, or the + button. Multipart uploads in parallel, with retries and instant (dedup) uploads
@@ -32,9 +39,9 @@ An **unofficial** native macOS client for [Grameenphone GP Cloud](https://gpclou
 - Keyboard shortcuts: ⌘1–4 switch sections, ⌘↑ goes up a folder, ⌫ moves to Trash, Space for Quick Look, ⌘R refreshes, ⇧⌘N makes a new folder
 - Universal (Apple Silicon and Intel), macOS 14 Sonoma or later
 
-## Install
+### Install
 
-### Homebrew
+#### Homebrew
 
 ```sh
 brew install --cask azs06/tap/gpcloud
@@ -42,7 +49,7 @@ brew install --cask azs06/tap/gpcloud
 
 Upgrade with `brew upgrade --cask gpcloud`. The cask clears the download quarantine, so the app opens normally.
 
-### Manual
+#### Manual
 
 1. Download `GPCloud-<version>-macOS.zip` from [Releases](../../releases) and unzip it.
 2. Move **GPCloud.app** to `/Applications`.
@@ -50,11 +57,11 @@ Upgrade with `brew upgrade --cask gpcloud`. The cask clears the download quarant
    - right-click the app → **Open** → **Open**, or
    - run `xattr -dr com.apple.quarantine /Applications/GPCloud.app`.
 
-## Signing in
+### Signing in
 
 Click **Sign in**. GP Cloud's own login page opens inside the app (phone number, password or OTP, 2FA). After you sign in, the app reads the session's access token from the web session. **The app never sees or stores your password.** GP Cloud's servers refresh the token. Sign Out (⋯ menu at the bottom of the sidebar, or the menu bar) deletes the app's GP Cloud cookies.
 
-## Build from source
+### Build from source
 
 Only Command Line Tools are needed; Xcode isn't required.
 
@@ -74,9 +81,16 @@ swift run -c release gpcloud-selftest   # offline tests for the hashing/upload m
 > Set `GPCLOUD_SDK=/path/to/sdk` to override. If you run `swift build`/`swift run` yourself and hit that error,
 > prefix the command with `SDKROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk`.
 
+### Known limitations
+
+- **Copy Public Link** and **Copy To** follow the Android app's requests but haven't been tested much. The share link's `validity` unit is a guess (7 days).
+- GP Cloud doesn't allow spaces or `<>|:"*?/\` in names. Uploads replace spaces with `_` and drop the other characters. The rename and new-folder dialogs explain the rule and offer to fix the name.
+- Empty (0-byte) files are rejected by the service.
+- **Open at Login** needs the app in `/Applications`.
+
 ## How it works
 
-[docs/API.md](docs/API.md) is the reverse-engineered protocol: the NextAuth login, every file endpoint, and the multipart upload. Each upload slice carries a SHA-256 *midstate* (`hashCtx`), plus a `proofCode` the server uses to check that the client has the file.
+[docs/API.md](docs/API.md) documents the GP Cloud API that every client here uses: the reverse-engineered protocol: the NextAuth login, every file endpoint, and the multipart upload. Each upload slice carries a SHA-256 *midstate* (`hashCtx`), plus a `proofCode` the server uses to check that the client has the file.
 
 ```
 Sources/GPCloudKit/      API client + upload protocol (no UI)
@@ -89,13 +103,6 @@ Sources/GPCloudKit/      API client + upload protocol (no UI)
 Sources/GPCloud/         SwiftUI app: auth (WKWebView), drive model, transfers, views, menu bar
 Sources/SelfTest/        offline checks
 ```
-
-## Known limitations
-
-- **Copy Public Link** and **Copy To** follow the Android app's requests but haven't been tested much. The share link's `validity` unit is a guess (7 days).
-- GP Cloud doesn't allow spaces or `<>|:"*?/\` in names. Uploads replace spaces with `_` and drop the other characters. The rename and new-folder dialogs explain the rule and offer to fix the name.
-- Empty (0-byte) files are rejected by the service.
-- **Open at Login** needs the app in `/Applications`.
 
 ## License
 
