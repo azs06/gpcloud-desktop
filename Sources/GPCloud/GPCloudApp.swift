@@ -33,6 +33,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // When launched as a bare executable (swift run), become a regular foreground app.
         NSApp.setActivationPolicy(.regular)
+        if DemoMode.enabled {
+            // Screenshot runs: don't steal focus; honour the requested appearance.
+            if let a = DemoMode.appearance { NSApp.appearance = NSAppearance(named: a == "dark" ? .darkAqua : .aqua) }
+            return
+        }
         NSApp.activate(ignoringOtherApps: true)
     }
     // Keep running in the menu bar when the window is closed (if the menu bar icon is enabled).
@@ -60,12 +65,14 @@ struct GPCloudApp: App {
                 .environmentObject(services.auth)
                 .environmentObject(services.drive)
                 .environmentObject(services.transfers)
-                .frame(minWidth: 860, minHeight: 540)
+                .frame(minWidth: DemoMode.enabled && DemoMode.view == "menubar" ? 340 : 860,
+                       minHeight: DemoMode.enabled && DemoMode.view == "menubar" ? 300 : 540)
         }
+        .defaultSize(width: 1180, height: 740)
         .windowToolbarStyle(.unified)
         .commands { AppCommands(auth: services.auth, drive: services.drive, showMenuBarIcon: $showMenuBarIcon) }
 
-        MenuBarExtra(isInserted: $showMenuBarIcon) {
+        MenuBarExtra(isInserted: DemoMode.enabled ? .constant(false) : $showMenuBarIcon) {
             MenuBarContent()
                 .environmentObject(services)
                 .environmentObject(services.auth)
@@ -130,12 +137,16 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            switch auth.state {
-            case .signedIn:
-                MainView()
-                    .task { await drive.start() }
-            case .checking, .signedOut:
-                WelcomeView()
+            if DemoMode.enabled {
+                DemoRoot()
+            } else {
+                switch auth.state {
+                case .signedIn:
+                    MainView()
+                        .task { await drive.start() }
+                case .checking, .signedOut:
+                    WelcomeView()
+                }
             }
         }
         .animation(.default, value: auth.state)

@@ -88,6 +88,16 @@ final class TransferManager: ObservableObject {
         if item.status.isActive { item.status = .cancelled }
     }
 
+    /// Demo mode only: show fixed sample transfers.
+    func injectDemo(_ samples: [(String, TransferItem.Kind, Int64, TransferItem.Status)]) {
+        items = samples.map { name, kind, size, status in
+            let item = TransferItem(name: name, kind: kind, localURL: URL(fileURLWithPath: "/tmp/\(name)"), size: size)
+            item.status = status
+            return item
+        }
+        panelVisible = true
+    }
+
     /// Sign-out: stop everything and forget the account.
     func reset() {
         generation += 1

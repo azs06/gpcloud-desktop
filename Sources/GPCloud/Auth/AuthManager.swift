@@ -51,6 +51,7 @@ final class AuthManager: NSObject, ObservableObject, TokenProvider {
 
     override init() {
         super.init()
+        if DemoMode.enabled { state = .signedIn; return }
         Task { await bootstrap() }
     }
 

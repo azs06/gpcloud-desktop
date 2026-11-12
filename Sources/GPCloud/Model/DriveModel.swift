@@ -74,6 +74,7 @@ final class DriveModel: ObservableObject {
     }
 
     func refreshAccount() async {
+        if DemoMode.enabled { space = DemoMode.space; profile = DemoMode.profile; return }
         if let s = try? await api.spaceInfo() { space = s }
         if let p = try? await api.profile() { profile = p }
     }
@@ -83,6 +84,12 @@ final class DriveModel: ObservableObject {
         let gen = loadGeneration
         isLoading = true
         defer { if gen == loadGeneration { isLoading = false } }
+        if DemoMode.enabled {
+            let fresh = DemoMode.items(section: section, folderId: currentFolderId, search: isSearching ? searchText : "")
+            itemsFromTrash = section == .trash
+            items = section == .recent && !isSearching ? fresh : sorted(fresh)
+            return
+        }
         do {
             let result: [CloudFile]
             let fromTrash = section == .trash
@@ -108,6 +115,7 @@ final class DriveModel: ObservableObject {
     }
 
     func recentFiles(limit: Int = 40) async throws -> [CloudFile] {
+        if DemoMode.enabled { return Array(DemoMode.recent.prefix(limit)) }
         let entries = try await api.recent()
         var seen = Set<String>()
         let ids = entries.compactMap { $0.metadata?.fileId ?? $0.fileId }.filter { seen.insert($0).inserted }.prefix(limit)
@@ -288,7 +296,7 @@ final class DriveModel: ObservableObject {
 
     /// Download to the cache (re-using it if already there) and open or preview.
     func openLocally(_ file: CloudFile, quickLook: Bool) async {
-        guard !file.isFolder else { return }
+        guard !file.isFolder, !DemoMode.enabled else { return }
         let dir = Self.cacheDir.appendingPathComponent(file.id, isDirectory: true)
         let dest = dir.appendingPathComponent(file.fileName)
         if !FileManager.default.fileExists(atPath: dest.path) {

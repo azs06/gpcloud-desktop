@@ -5,6 +5,23 @@ An **unofficial** native macOS client for [Grameenphone GP Cloud](https://gpclou
 > **Not affiliated with, endorsed by, or supported by Grameenphone.** "GP Cloud" and "Grameenphone" belong to their owners.
 > The app talks to undocumented APIs that can change at any time. Use at your own risk.
 
+<p align="center">
+  <img src="docs/screenshots/drive-grid.png" alt="My Drive in grid view with thumbnails and the transfers panel" width="820">
+</p>
+
+<table>
+  <tr>
+    <td width="66%"><img src="docs/screenshots/drive-list.png" alt="List view in dark mode"></td>
+    <td width="34%"><img src="docs/screenshots/menubar.png" alt="Menu bar extra with storage, transfers and recent files"></td>
+  </tr>
+  <tr>
+    <td align="center"><sub>List view (dark mode)</sub></td>
+    <td align="center"><sub>Menu bar extra</sub></td>
+  </tr>
+</table>
+
+<sub>Screenshots use the built-in demo mode with sample files. Regenerate them with <code>./scripts/screenshots.sh</code>.</sub>
+
 ## Features
 
 - **My Drive**: breadcrumbs, a grid view (thumbnails for photos and videos), and a list view sortable by name, date or size
@@ -46,7 +63,11 @@ Only Command Line Tools are needed; Xcode isn't required.
 ARCHS=arm64 ./scripts/build-app.sh  # faster, Apple Silicon only
 ./scripts/package-release.sh      # → dist/GPCloud-<version>-macOS.zip + .sha256
 swift run -c release gpcloud-selftest   # offline tests for the hashing/upload math
+./scripts/screenshots.sh          # regenerate docs/screenshots from demo mode (screen must be awake)
 ```
+
+**Demo mode:** run the app with `GPCLOUD_DEMO=1` to see sample files without an account.
+`GPCLOUD_DEMO_VIEW=grid|list|menubar` and `GPCLOUD_DEMO_APPEARANCE=light|dark` pick what's shown.
 
 > Recent Command Line Tools ship a macOS 26.5 SDK that can't import WebKit with Swift 6.3.3
 > (`could not build Objective-C module 'std'`). The build script uses `MacOSX15.4.sdk` when it exists.
