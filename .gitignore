@@ -1,6 +1,9 @@
 .build/
 build/
 dist/
+node_modules/
+target/
+windows/src-tauri/gen/
 .DS_Store
 *.xcodeproj
 .swiftpm/
