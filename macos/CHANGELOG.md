@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.1.0 — 2026-11-17
 
 - Menu bar icon turns GP Cloud blue when you're signed in.
 - Menu bar icon shows a progress bar under the cloud while files upload or download.
