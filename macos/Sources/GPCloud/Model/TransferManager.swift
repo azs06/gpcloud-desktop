@@ -51,6 +51,9 @@ final class TransferItem: ObservableObject, Identifiable {
 final class TransferManager: ObservableObject {
     @Published private(set) var items: [TransferItem] = []
     @Published var panelVisible = false
+    /// Combined progress (0...1) of the current batch of transfers, or nil when nothing is running.
+    /// Quantized to 2% steps so the menu bar icon isn't redrawn on every chunk.
+    @Published private(set) var overallProgress: Double?
 
     private let api: GPCloudAPI
     private let engine: UploadEngine
@@ -68,6 +71,9 @@ final class TransferManager: ObservableObject {
     private var reservedPaths = Set<String>()
 
     private var refreshTask: Task<Void, Never>?
+    /// Transfers started since the last time everything was idle; the basis for `overallProgress`.
+    private var batch: [TransferItem] = []
+    private var progressTask: Task<Void, Never>?
     /// Bumped on reset so work from a previous account can't touch the new one.
     private var generation = 0
 
@@ -108,6 +114,49 @@ final class TransferManager: ObservableObject {
         cloudUserId = nil
         panelVisible = false
         refreshTask?.cancel()
+        batch.removeAll()
+        progressTask?.cancel()
+        progressTask = nil
+        overallProgress = nil
+    }
+
+    // MARK: - Overall progress
+
+    /// Adds an item to the current batch (starting a new batch if everything was idle).
+    private func track(_ item: TransferItem) {
+        if !batch.contains(where: { $0.status.isActive }) { batch.removeAll() }
+        batch.append(item)
+        updateOverallProgress()
+        guard progressTask == nil else { return }
+        // Poll while anything is active; item progress isn't published through the manager.
+        progressTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 250_000_000)
+                guard let self, !Task.isCancelled else { return }
+                self.updateOverallProgress()
+                if self.overallProgress == nil { break }
+            }
+            self?.progressTask = nil
+        }
+    }
+
+    private func updateOverallProgress() {
+        let live = batch.filter {
+            switch $0.status { case .failed, .cancelled: return false; default: return true }
+        }
+        guard live.contains(where: { $0.status.isActive }) else {
+            if overallProgress != nil { overallProgress = nil }
+            return
+        }
+        // Weight by size so a big file dominates; empty files still count a little.
+        var total = 0.0, done = 0.0
+        for item in live {
+            let w = Double(max(item.size, 1))
+            total += w
+            done += w * item.fraction
+        }
+        let p = min(1, (done / total * 50).rounded(.down) / 50)
+        if p != overallProgress { overallProgress = p }
     }
 
     /// Coalesce list/storage refreshes while many transfers finish.
@@ -155,6 +204,7 @@ final class TransferManager: ObservableObject {
         let size = Int64(values?.fileSize ?? 0)
         let item = TransferItem(name: url.lastPathComponent, kind: .upload, localURL: url, size: size)
         items.insert(item, at: 0)
+        track(item)
         pendingUploads.append((item, folderId))
         pumpUploads()
     }
@@ -214,6 +264,7 @@ final class TransferManager: ObservableObject {
             reservedPaths.insert(dest.path)
             let item = TransferItem(name: dest.lastPathComponent, kind: .download, localURL: dest, size: file.fileSize ?? 0)
             items.insert(item, at: 0)
+            track(item)
             pendingDownloads.append((item, file))
         }
         pumpDownloads()
